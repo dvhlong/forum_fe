@@ -2,7 +2,6 @@
   "name": "forum_fe",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:8080",
   "dependencies": {
     "@ckeditor/ckeditor5-alignment": "^34.0.0",
     "@ckeditor/ckeditor5-react": "^5.0.0",
