@@ -18,8 +18,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="" element={<Login />}></Route>
-        <Route path="" element={<HeaderComponent />}>
+        <Route path="/" element={<Login />}></Route>
+        <Route path="/" element={<HeaderComponent />}>
           <Route path="/posts/all" element={<Posts />}></Route>
           <Route path="/posts/key=:key" element={<Posts />}></Route>
           <Route path="/posts/topic=:topicid" element={<Posts />}></Route>
