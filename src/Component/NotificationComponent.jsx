@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 function NotificationComponent(props) {
 
+    const serverUrl = "https://dvhl-forum-be.herokuapp.com";
+
     const [notification, setNotification] = useState({
         post: {
             id: 0,
@@ -30,7 +32,7 @@ function NotificationComponent(props) {
     return (
         <div className='notification' onClick={() => navigate(`/postDetail/${notification.post.id}`)} key={notification.id}>
             <div className='notification-avatar'>
-                <img style={{ width: "50px", height: "50px", borderRadius: "50%" }} src={"http://" + window.location.hostname + ":8080/files/" + notification.notifiedacc.avatar} alt=''></img>
+                <img style={{ width: "50px", height: "50px", borderRadius: "50%" }} src={serverUrl + "/files/" + notification.notifiedacc.avatar} alt=''></img>
             </div>
             <div className='notification-content'>
                 <div className='notification-text'>
