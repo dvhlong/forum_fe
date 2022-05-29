@@ -1,4 +1,3 @@
-// import logo from './logo.svg';
 import './App.css';
 import Login from './Page/Login';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -19,8 +18,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />}></Route>
-        <Route path="/" element={<HeaderComponent />}>
+        <Route path="" element={<Login />}></Route>
+        <Route path="" element={<HeaderComponent />}>
           <Route path="/posts/all" element={<Posts />}></Route>
           <Route path="/posts/key=:key" element={<Posts />}></Route>
           <Route path="/posts/topic=:topicid" element={<Posts />}></Route>
