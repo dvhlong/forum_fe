@@ -1,6 +1,6 @@
 import axios from "axios";
 class PostService {
-    baseURL = "https://dvhl-forum-be.herokuapp.com/";
+    baseURL = "https://dvhl-forum-be.herokuapp.com";
     createPost(topicid, newPost) {
         return axios(
             {

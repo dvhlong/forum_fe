@@ -1,7 +1,7 @@
 import axios from "axios";
 
 class NotificationService {
-    baseURL = "https://dvhl-forum-be.herokuapp.com/";
+    baseURL = "https://dvhl-forum-be.herokuapp.com";
     getNotifications(page, ourRequest) {
         return axios(
             {

@@ -20,7 +20,7 @@ import Swal from 'sweetalert2';
 
 function ApprovePosts() {
 
-    const serverUrl = "https://dvhl-forum-be.herokuapp.com/files/";
+    const serverUrl = "https://dvhl-forum-be.herokuapp.com";
 
     let Sock = new SockJS(serverUrl + '/ws');
 
