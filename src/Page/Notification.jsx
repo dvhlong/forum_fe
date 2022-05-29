@@ -6,8 +6,16 @@ import { motion } from "framer-motion"
 import NotificationService from '../Service/NotificationService';
 import axios from "axios";
 import NotificationComponent from '../Component/NotificationComponent';
+import { over } from 'stompjs';
+import SockJS from 'sockjs-client';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Notification() {
+
+    let Sock = new SockJS('http://localhost:8080/ws');
+
+    let stompClient = over(Sock);
 
     const [loading, setLoading] = useState(false);
 
@@ -18,6 +26,13 @@ function Notification() {
     const [page, setPage] = useState(1);
 
     const [pages, setPages] = useState(0);
+
+    const [update, setUpdate] = useState(false);
+
+    const reload = () => {
+        disconectSocket();
+        setUpdate(!update);
+    }
 
     const changePage = (e) => {
         if (e.target.valueAsNumber >= 1)
@@ -34,26 +49,57 @@ function Notification() {
             setPage(page - 1);
     }
 
+    const connectSocket = () => {
+        if (!stompClient.connected) {
+            stompClient.connect({
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                "Access-Control-Allow-Credentials": true,
+            }, onConnected, onError);
+        }
+    }
+
+    const onConnected = () => {
+        stompClient.subscribe(`/user/${localStorage.getItem("username")}/updateNotification/`, onUpdateNotificationMessage, { id: "notification" });
+    }
+
+    const onUpdateNotificationMessage = (payload) => {
+        toast.info(payload.body, {
+            position: "top-right",
+            autoClose: 5000,
+        });
+        reload();
+    }
+
+    const onError = (err) => {
+        console.log(err);
+    }
+
+    const disconectSocket = () => {
+        stompClient.disconnect();
+    }
+
     useEffect(() => {
+        connectSocket();
         setLoading(true);
         const ourRequest = axios.CancelToken.source();
         setTimeout(async () => {
             await NotificationService.getNotifications(page, ourRequest).then(res => {
                 setNotifications(res.data.content);
-                console.log(notifications);
                 setPages(res.data.totalPages)
             })
             setLoading(false);
             if (mount === false)
                 setMount(true);
             return () => {
+                disconectSocket();
                 ourRequest.cancel('Request is canceled by user');
             }
         }, 800);
-    }, [page])
+    }, [page, update])
 
     return (
         <div>
+            <ToastContainer theme="dark" />
             <h1 style={{ textAlign: "center", color: "black" }}>NOTIFICATION</h1>
             <table style={{ width: "100%", border: "none" }}>
                 <td style={{ width: "30%", color: "yellow", verticalAlign: "top" }}>

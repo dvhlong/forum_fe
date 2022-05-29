@@ -9,12 +9,20 @@ import { TailSpin } from 'react-loader-spinner';
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 import parse from "html-react-parser";
-import Swal from 'sweetalert2';
 import SideComponent from '../Component/SideComponent';
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
+import { over } from 'stompjs';
+import SockJS from 'sockjs-client';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 
 function ApprovePosts() {
+
+    let Sock = new SockJS('http://localhost:8080/ws');
+
+    var stompClient = over(Sock);
 
     const relativeTime = require('dayjs/plugin/relativeTime');
 
@@ -28,7 +36,10 @@ function ApprovePosts() {
 
     const [update, setUpdate] = useState(false);
 
-    const reload = () => { setUpdate(!update); }
+    const reload = () => {
+        disconectSocket();
+        setUpdate(!update);
+    }
 
     const [result, setResult] = useState([]);
 
@@ -51,59 +62,102 @@ function ApprovePosts() {
             setPage(page - 1);
     }
 
-    const approvePost = (id) => {
-        PostService.approvePost(id).then(res => {
+    const approvePost = (post) => {
+        PostService.approvePost(post.id).then(res => {
             if (res.data.status === 401) {
-                alert("session expired");
+                Swal.fire({
+                    icon: 'danger',
+                    title: 'Session expired !!!!',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
                 navigate("/");
             }
-            console.log(res.data)
-            reload();
+            stompClient.send(`/notify/${post.created_acc.username}`, {}, `${localStorage.getItem("username")} approved your post: ${post.title}`);
+            stompClient.send("/notify/updatePostsToApprove");
         })
-        Swal.fire({
-            icon: 'success',
-            title: 'Approved !!!!',
-            showConfirmButton: false,
-            timer: 1500
-        })
+        toast.success('Approved !!!', {
+            position: "top-right",
+            autoClose: 5000,
+        });
     }
 
     const rejectPost = (id) => {
         PostService.rejectPost(id).then(res => {
             if (res.data.status === 401) {
-                alert("session expired");
+                Swal.fire({
+                    icon: 'danger',
+                    title: 'Session expired !!!!',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
                 navigate("/")
             }
-            console.log(res.data)
-            reload()
+            stompClient.send("/notify/updatePostsToApprove");
         })
-        Swal.fire({
-            icon: 'success',
-            title: 'Reject !!!!',
-            showConfirmButton: false,
-            timer: 1500
-        })
+        toast.success('Rejected !!!', {
+            position: "top-right",
+            autoClose: 5000,
+        });
+    }
+
+    const connectSocket = () => {
+        if (!stompClient.connected) {
+            stompClient.connect({
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                "Access-Control-Allow-Credentials": true,
+            }, onConnected, onError);
+        }
+    }
+
+    const onConnected = () => {
+        stompClient.subscribe("/public/receivedUpdateNewPostsToApprove", _res => {
+            stompClient.unsubscribe("newpost");
+            toast.info('New post waiting for approval !!!', {
+                position: "top-right",
+                autoClose: 5000,
+            });
+            reload();
+        }, { id: "newpost" })
+        stompClient.subscribe("/public/receivedUpdatePostsToApprove", _res => {
+            stompClient.unsubscribe("updatepost");
+            reload();
+        }, { id: "updatepost" })
+    }
+
+    const onError = (err) => {
+        console.log(err);
+    }
+
+    const disconectSocket = () => {
+        Sock.close();
     }
 
     useEffect(() => {
+        console.log(stompClient.subscriptions);
+        connectSocket();
         setLoading(true);
         const ourRequest = axios.CancelToken.source();
         setTimeout(async () => {
             await PostService.getPostsNotApprove(page, ourRequest).then(res => {
                 if (res.data.status === 401) {
-                    alert("session expired");
+                    Swal.fire({
+                        icon: 'danger',
+                        title: 'Session expired !!!!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
                     navigate("/")
                 }
                 if (res.data.content !== null) {
-                    // console.log(res.data.content);
                     setResult(res.data.content);
                     setPages(res.data.totalPages)
                 }
             })
             setLoading(false);
-            if (mount === false)
-                setMount(true);
+            setMount(true);
             return () => {
+                disconectSocket();
                 ourRequest.cancel('Request is canceled by user');
             }
         }, 800);
@@ -111,6 +165,7 @@ function ApprovePosts() {
 
     return (
         <div>
+            <ToastContainer theme="dark" />
             <div>
                 {/* <Header/> */}
                 {/* <h1 style={{textAlign:"center",color:"white"}}>APPROVE POST</h1> */}
@@ -174,7 +229,7 @@ function ApprovePosts() {
                                                                     </td>
                                                                     <td style={{ verticalAlign: "top" }}>
                                                                         <ButtonGroup aria-label="Basic example">
-                                                                            <Button variant="success" onClick={() => approvePost(post.id)}><img src={yesIcon} alt="" /></Button>
+                                                                            <Button variant="success" onClick={() => approvePost(post)}><img src={yesIcon} alt="" /></Button>
                                                                             <Button variant="danger" onClick={() => rejectPost(post.id)}><img src={noIcon} alt="" /></Button>
                                                                         </ButtonGroup>
                                                                     </td>

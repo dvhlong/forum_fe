@@ -15,9 +15,16 @@ import Swal from 'sweetalert2';
 import SideComponent from '../Component/SideComponent';
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
-import CommentComponent from '../Component/CommentComponent';
+import { over } from 'stompjs';
+import SockJS from 'sockjs-client';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function PostDetail() {
+
+    let Sock = new SockJS('http://localhost:8080/ws');
+
+    let stompClient = over(Sock);
 
     const relativeTime = require('dayjs/plugin/relativeTime');
 
@@ -47,9 +54,16 @@ function PostDetail() {
 
     const [loading, setLoading] = useState(false);
 
-    const [update, setUpdate] = useState(false);
+    const [updatePost, setUpdatePost] = useState(false);
 
-    const reload = () => { setUpdate(!update); }
+    const reloadPost = () => { setUpdatePost(!updatePost); }
+
+    const [updateComments, setUpdateComments] = useState(false);
+
+    const reloadComments = () => {
+        disconectSocket();
+        setUpdateComments(!updateComments);
+    }
 
     const [isEdit, setIsEdit] = useState(false);
 
@@ -96,14 +110,12 @@ function PostDetail() {
         }
         if (editCommentContent !== "") {
             PostService.editComment(editCommentId, comment).then(res => {
-                reload();
+                reloadComments();
                 setIsEdit(false);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Comment Changed !!!!',
-                    showConfirmButton: false,
-                    timer: 1500
-                })
+                toast.success('Comment changed !!!', {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
             })
         }
     }
@@ -127,13 +139,11 @@ function PostDetail() {
 
     const deleteComment = () => {
         PostService.deleteComment(deleteCommentId).then(res => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Comment deleted !!!!',
-                showConfirmButton: false,
-                timer: 1500
-            })
-            reload();
+            toast.success('Comment deleted !!!', {
+                position: "top-right",
+                autoClose: 5000,
+            });
+            stompClient.send("notify/updateComments/" + String(id));
         })
         handleCloseDeleteCommentModal();
     }
@@ -166,16 +176,31 @@ function PostDetail() {
             setPage(e.target.valueAsNumber);
     }
 
-    const addComment = (postid, replyid) => {
+    const addComment = (post, repliedComment) => {
         let comment = {
             content: newComment
         }
         if (newComment !== "") {
-            PostService.addComment(postid, replyid, comment).then(res => {
+            PostService.addComment(post.id, repliedComment.id, comment).then(res => {
+                if (res.data.data.status === "OK") {
+                    if (repliedComment.id === 0) {
+                        toast.success('Commented !!!', {
+                            position: "top-right",
+                            autoClose: 5000,
+                        });
+                        stompClient.send(`/notify/${post.created_acc.id}`, {}, `${localStorage.getItem("username")} commented on your post: ${post.title}`);
+                    } else {
+                        toast.success('Replied !!!', {
+                            position: "top-right",
+                            autoClose: 5000,
+                        });
+                        stompClient.send(`/notify/${repliedComment.created_acc.id}`, {}, `${localStorage.getItem("username")} replied your comment in post: ${post.title}`);
+                    }
+                }
                 if (page !== 1)
                     setPage(1);
                 else
-                    reload();
+                    stompClient.send("notify/updateComments/" + String(id));
             })
             setIsReply(false);
             setNewComment("");
@@ -187,11 +212,40 @@ function PostDetail() {
         handleCloseDelete();
         PostService.deletePost(String(id)).then(res => {
             if (res.data.status === 401) {
-                alert("session expired");
+                Swal.fire({
+                    icon: 'danger',
+                    title: 'Session expired !!!!',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
                 navigate("/")
             }
-            navigate("/posts")
+            navigate("/posts/all")
         });
+    }
+
+    const connectSocket = () => {
+        stompClient.connect({
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            "Access-Control-Allow-Credentials": true,
+        }, onConnected, onError);
+    }
+
+    const onConnected = () => {
+        stompClient.subscribe("/receivedUpdatePost/" + String(id), _res => {
+            reloadPost();
+        })
+        stompClient.subscribe("/receivedUpdateComments/" + String(id), _res => {
+            reloadComments();
+        })
+    }
+
+    const onError = (err) => {
+        console.log(err);
+    }
+
+    const disconectSocket = () => {
+        stompClient.disconnect();
     }
 
     useEffect(() => {
@@ -200,7 +254,12 @@ function PostDetail() {
         setTimeout(async () => {
             await PostService.getPost(String(id), ourRequest).then(res => {
                 if (res.data.status === 401) {
-                    alert("session expired");
+                    Swal.fire({
+                        icon: 'danger',
+                        title: 'Session expired !!!!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
                     navigate("/")
                 }
                 setPost(res.data);
@@ -212,9 +271,10 @@ function PostDetail() {
                 ourRequest.cancel('Request is canceled by user');
             }
         }, 800);
-    }, [id, update])
+    }, [id, updatePost])
 
     useEffect(() => {
+        connectSocket();
         setLoading(true);
         setTimeout(async () => {
             await PostService.getComments(String(id), page).then(res => {
@@ -227,11 +287,15 @@ function PostDetail() {
             setLoading(false);
             if (mount === false)
                 setMount(true);
+            return () => {
+                disconectSocket();
+            }
         }, 800);
-    }, [id, page, update])
+    }, [id, page, updateComments])
 
     return (
         <div>
+            <ToastContainer theme="dark" />
             <div>
                 <table style={{ width: "100%", border: "none", marginTop: "30px" }}>
                     <tr>
@@ -285,7 +349,7 @@ function PostDetail() {
                                             <Form.Group style={{ marginTop: "30px" }}>
                                                 <Form.Control as="textarea" rows={3} placeholder='Type your comment.....' onChange={changeNewComment}></Form.Control>
                                                 <div style={{ width: "100%", textAlign: 'right' }}>
-                                                    <Button style={{ color: "white", width: "100%" }} onClick={() => addComment(post.id, 0)}>Comment</Button>
+                                                    <Button style={{ color: "white", width: "100%" }} onClick={() => addComment(post, undefined)}>Comment</Button>
                                                 </div>
                                             </Form.Group>
                                         </td>
@@ -383,7 +447,7 @@ function PostDetail() {
                                                                                 <Card.Footer>
                                                                                     <Form.Control as="textarea" cols={1} placeholder='Reply comment.....' onChange={changeNewComment}></Form.Control>
                                                                                     <div style={{ width: "100%", textAlign: "right" }}>
-                                                                                        <Button style={{ color: "white" }} onClick={() => addComment(post.id, comment.id)}>Reply</Button>
+                                                                                        <Button style={{ color: "white" }} onClick={() => addComment(post, comment)}>Reply</Button>
                                                                                         <Button style={{ color: "white", marginLeft: "10px" }} onClick={cancelReply}>Cancel</Button>
                                                                                     </div>
                                                                                 </Card.Footer>
