@@ -57,8 +57,8 @@ function ChangeInfo() {
                 setPhone(res.data.data.phone);
                 setEmail(res.data.data.email);
                 setDateOfBirth(res.data.data.birthdate);
-                setAvatar(res.data.data.avatar);
-                localStorage.setItem("avatar", serverUrl + "/files/" + res.data.data.avatar);
+                setAvatar(res.data.data.avatarUrl);
+                localStorage.setItem("avatar", res.data.data.avatarUrl);
             })
             setLoading(false);
             return () => {
@@ -81,8 +81,18 @@ function ChangeInfo() {
         } else {
             formData.append("avatar", newAvatar, newAvatar.name);
             AccSV.uploadAvatar(formData).then(res => {
-                console.log(res);
-                reload();
+                if (res.data.status === "OK") {
+                    toast.success('Upload avatar successful !!!', {
+                        position: "top-right",
+                        autoClose: 5000,
+                    });
+                    reload();
+                } else {
+                    toast.error('Upload avatar fail !!!', {
+                        position: "top-right",
+                        autoClose: 5000,
+                    });
+                }
             })
             setNewAvatar();
         }
@@ -198,7 +208,7 @@ function ChangeInfo() {
                         <table style={{ width: "100%" }}>
                             <tr style={{ textAlign: "center" }}>
                                 <td>
-                                    <img style={{ width: "200px", height: "200px", borderRadius: "50%" }} src={"https://drive.google.com/file/d/13Gc7WCiGWrRpT4DfY5I0_9V_WAacpHIt/view?usp=drivesdk"} key={avatar} alt=''></img>
+                                    <img style={{ width: "200px", height: "200px", borderRadius: "50%" }} src={avatar} key={avatar} alt=''></img>
                                 </td>
                             </tr>
                             <tr>

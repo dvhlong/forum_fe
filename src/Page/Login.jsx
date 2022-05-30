@@ -51,7 +51,7 @@ function Login() {
                         localStorage.setItem("accid", res.data.acc.id);
                         localStorage.setItem("username", res.data.acc.username);
                         localStorage.setItem("role", res.data.acc.authorities[0].authority)
-                        localStorage.setItem("avatar", serverUrl + "/files/" + res.data.acc.avatar)
+                        localStorage.setItem("avatar", res.data.acc.avatarUrl)
                         navigate('/topic');
                     } else if (res.data.message === "User account is locked") {
                         setError("Username is blocked !!!!");

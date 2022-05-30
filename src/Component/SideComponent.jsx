@@ -3,11 +3,8 @@ import Card from 'react-bootstrap/Card';
 import axios from "axios";
 import statisticService from '../Service/StatisticService';
 import { useNavigate } from 'react-router-dom';
-import ChartIcon from '../SVG/chart.svg';
 
 function SidebarComponent() {
-
-    const serverUrl = "https://dvhl-forum-be.herokuapp.com";
 
     let navigate = useNavigate();
 
@@ -41,7 +38,7 @@ function SidebarComponent() {
             <Card.Body className='side-body'>
                 <p><b className='red'>Post quantity: </b><b>{statistic.postQuantity}</b></p>
                 <p><b className='red'>Member quantity: </b><b>{statistic.memberQuantity}</b></p>
-                <p><b className='red'>Newest member: </b><img src={serverUrl + "/files/" + statistic.newMember.avatar} alt="" style={{ width: "30px", height: "30px", borderRadius: "50%" }}></img> <b>{statistic.newMember.username}</b></p>
+                <p><b className='red'>Newest member: </b><img src={statistic.newMember.avatarUrl} alt="" style={{ width: "30px", height: "30px", borderRadius: "50%" }}></img> <b>{statistic.newMember.username}</b></p>
             </Card.Body>
         </Card>
     )

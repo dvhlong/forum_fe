@@ -11,8 +11,6 @@ import '../App.css';
 
 function HeaderComponent() {
 
-    const serverUrl = "https://dvhl-forum-be.herokuapp.com";
-
     let navigate = useNavigate();
 
     const [reloadPageNavigated, setReloadPageNavigated] = useState(false);
