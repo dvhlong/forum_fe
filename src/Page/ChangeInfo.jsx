@@ -198,7 +198,7 @@ function ChangeInfo() {
                         <table style={{ width: "100%" }}>
                             <tr style={{ textAlign: "center" }}>
                                 <td>
-                                    <img style={{ width: "200px", height: "200px", borderRadius: "50%" }} src={serverUrl + "/files/" + avatar} key={avatar} alt=''></img>
+                                    <img style={{ width: "200px", height: "200px", borderRadius: "50%" }} src={"https://drive.google.com/file/d/13Gc7WCiGWrRpT4DfY5I0_9V_WAacpHIt/view?usp=drivesdk"} key={avatar} alt=''></img>
                                 </td>
                             </tr>
                             <tr>
