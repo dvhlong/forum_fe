@@ -301,8 +301,8 @@ function PostDetail() {
             <div>
                 <table style={{ width: "100%", border: "none", marginTop: "30px" }}>
                     <tr>
-                        <td style={{ width: "30%", verticalAlign: "top" }}>
-                            <table style={{ width: "100%", textAlign: "center" }}>
+                        <td style={{ width: "25%", verticalAlign: "top" }}>
+                            <table style={{ width: "70%", textAlign: "center" }}>
                                 <tr>
                                     {
                                         (loading === true)
@@ -319,9 +319,9 @@ function PostDetail() {
                         {
                             (mount === false)
                                 ?
-                                <td style={{ width: "60%" }}></td>
+                                <td style={{ width: "55%" }}></td>
                                 :
-                                <motion.td style={{ width: "60%" }}
+                                <motion.td style={{ width: "55%" }}
                                     animate={{
                                         opacity: [0, 1],
                                         translateY: [80, 0],
@@ -503,7 +503,7 @@ function PostDetail() {
                                     </tr>
                                 </motion.td>
                         }
-                        <td style={{ width: "10%", color: "yellow" }}>
+                        <td style={{ width: "20%", color: "yellow" }}>
                             <Modal
                                 show={showDelete}
                                 onHide={handleCloseDelete}
