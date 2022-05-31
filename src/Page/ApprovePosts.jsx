@@ -39,7 +39,6 @@ function ApprovePosts() {
     const [update, setUpdate] = useState(false);
 
     const reload = () => {
-        disconectSocket();
         setUpdate(!update);
     }
 
@@ -75,8 +74,9 @@ function ApprovePosts() {
                 })
                 navigate("/");
             }
-            stompClient.send(`/notify/${post.created_acc.username}`, {}, `${localStorage.getItem("username")} approved your post: ${post.title}`);
-            stompClient.send("/notify/updatePostsToApprove");
+            reload()
+            // stompClient.send(`/notify/${post.created_acc.username}`, {}, `${localStorage.getItem("username")} approved your post: ${post.title}`);
+            // stompClient.send("/notify/updatePostsToApprove");
         })
         toast.success('Approved !!!', {
             position: "top-right",
@@ -95,7 +95,8 @@ function ApprovePosts() {
                 })
                 navigate("/")
             }
-            stompClient.send("/notify/updatePostsToApprove");
+            reload();
+            // stompClient.send("/notify/updatePostsToApprove");
         })
         toast.success('Rejected !!!', {
             position: "top-right",
